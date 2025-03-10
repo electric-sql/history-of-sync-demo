@@ -12,7 +12,10 @@
     "preview": "vite preview",
     "prepare": "husky",
     "lint-staged": "lint-staged",
-    "test": "vitest --run"
+    "test": "vitest --run",
+    "generate": "drizzle-kit generate",
+    "migrate": "tsx server/db/migrate.js",
+    "studio": "drizzle-kit studio"
   },
   "lint-staged": {
     "*.{ts,tsx,json,js,jsx}": [
@@ -43,8 +46,10 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.4.0",
+    "drizzle-kit": "^0.30.5",
+    "drizzle-orm": "^0.40.0",
     "hono": "^4.7.4",
-    "pg": "^8.11.3",
+    "postgres": "^3.4.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   }
