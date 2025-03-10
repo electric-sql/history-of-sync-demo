@@ -15,7 +15,7 @@
     "test": "vitest --run",
     "generate": "drizzle-kit generate",
     "migrate": "tsx server/db/migrate.js",
-    "studio": "drizzle-kit studio"
+    "studio": "drizzle-kit studio --port 3333 --verbose"
   },
   "lint-staged": {
     "*.{ts,tsx,json,js,jsx}": [
