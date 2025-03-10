@@ -1,27 +1,21 @@
 import React from "react"
-import { useState } from "react"
 import "./App.css"
+import "@radix-ui/themes/styles.css"
+// Import the typography CSS file after Radix's CSS
+import "../public/typography.css"
+import "@fontsource/merriweather"
+import "@fontsource/merriweather-sans"
+import { Theme } from "@radix-ui/themes"
+import Demo from "./components/Demo"
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
+    <Theme>
       <div className="app-container">
-        <h1>React + Hono.js + Postgres App</h1>
-        <div className="card">
-          <button onClick={() => setCount((count) => count + 1)}>
-            count is {count}
-          </button>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test HMR
-          </p>
-        </div>
-        <p className="read-the-docs">
-          Hello World! This is our React + Hono.js + Postgres application.
-        </p>
+        <h1>React Components Demo</h1>
+        <Demo />
       </div>
-    </>
+    </Theme>
   )
 }
 
