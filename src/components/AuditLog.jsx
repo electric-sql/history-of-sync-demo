@@ -1,5 +1,5 @@
 import React from "react"
-import { Card, Box, Heading, Text } from "@radix-ui/themes"
+import { Card, Box, Text, Flex } from "@radix-ui/themes"
 import PropTypes from "prop-types"
 import { AuditLogEntry } from "./AuditLogEntry"
 
@@ -12,7 +12,7 @@ export const AuditLog = ({ logs = [] }) => {
   if (logs.length === 0) {
     return (
       <Card size="2">
-        <Box p="4" style={{ textAlign: "center" }}>
+        <Box p="4">
           <Text color="gray" size="2">
             No activity recorded yet.
           </Text>
@@ -21,23 +21,14 @@ export const AuditLog = ({ logs = [] }) => {
     )
   }
 
+  logs.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
+
   return (
-    <Card size="2" style={{ maxHeight: "600px", overflow: "auto" }}>
-      <Box
-        p="3"
-        style={{
-          backgroundColor: "var(--gray-2)",
-          borderBottom: "1px solid var(--gray-4)",
-        }}
-      >
-        <Heading size="3" as="h3">
-          Activity Log
-        </Heading>
-      </Box>
+    <Flex direction="column">
       {logs.map((log, index) => (
         <AuditLogEntry key={index} log={log} />
       ))}
-    </Card>
+    </Flex>
   )
 }
 

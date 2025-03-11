@@ -8,35 +8,40 @@ import PropTypes from "prop-types"
  * @param {Object} props.todo - The todo item object
  * @param {string} props.todo.id - Unique identifier for the todo
  * @param {string} props.todo.title - Title of the todo
- * @param {boolean} props.todo.completed - Whether the todo is completed
+ * @param {boolean} props.todo.is_complete - Whether the todo is completed
+ * @param {Function} props.onToggleComplete - Function to toggle todo completion status
+ * @param {Function} props.onDelete - Function to delete a todo
  */
-export const TodoItem = ({ todo }) => {
+export const TodoItem = ({ todo, onToggleComplete, onDelete }) => {
+  const handleToggle = () => {
+    if (onToggleComplete) {
+      onToggleComplete(todo.id, todo.is_complete)
+    }
+  }
+
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(todo.id)
+    }
+  }
+
   return (
-    <Flex
-      align="center"
-      justify="between"
-      py="2"
-      px="3"
-      style={{
-        borderBottom: "1px solid var(--gray-4)",
-        backgroundColor: todo.completed ? "var(--gray-2)" : "white",
-      }}
-    >
+    <Flex align="center" justify="between">
       <Flex align="center" gap="2">
-        <Checkbox checked={todo.completed} readOnly />
+        <Checkbox checked={todo.is_complete} onClick={handleToggle} />
 
         <Text
           size="2"
           style={{
-            textDecoration: todo.completed ? "line-through" : "none",
-            color: todo.completed ? "var(--gray-9)" : "var(--gray-12)",
+            textDecoration: todo.is_complete ? "line-through" : "none",
+            color: todo.is_complete ? "var(--gray-9)" : "var(--gray-12)",
           }}
         >
           {todo.title}
         </Text>
       </Flex>
 
-      <Button color="red" variant="soft" size="1">
+      <Button color="red" variant="soft" size="1" onClick={handleDelete}>
         Delete
       </Button>
     </Flex>
@@ -47,8 +52,10 @@ TodoItem.propTypes = {
   todo: PropTypes.shape({
     id: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
-    completed: PropTypes.bool.isRequired,
+    is_complete: PropTypes.bool,
   }).isRequired,
+  onToggleComplete: PropTypes.func,
+  onDelete: PropTypes.func,
 }
 
 export default TodoItem

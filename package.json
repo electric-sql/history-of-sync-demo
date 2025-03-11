@@ -5,7 +5,7 @@
   "type": "module",
   "description": "React + Hono.js + Postgres application",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"vite\" \"tsx server/index.ts\"",
     "server": "tsx server/index.ts",
     "build": "vite build",
     "lint": "eslint .",
@@ -19,7 +19,7 @@
     "studio": "drizzle-kit studio --port 3333 --verbose"
   },
   "lint-staged": {
-    "*.{ts,tsx,json,js,jsx}": [
+    "*.{ts,tsx,js,jsx}": [
       "eslint --fix"
     ]
   },
@@ -31,6 +31,7 @@
     "@typescript-eslint/eslint-plugin": "^8.26.1",
     "@typescript-eslint/parser": "^8.26.1",
     "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^9.1.2",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.3",
@@ -52,6 +53,9 @@
     "@hono/node-server": "^1.4.0",
     "@radix-ui/react-toast": "^1.2.6",
     "@radix-ui/themes": "^3.2.1",
+    "@tanstack/react-router": "^1.114.13",
+    "@tanstack/router": "0.0.1-beta.53",
+    "diff": "^7.0.0",
     "drizzle-kit": "^0.30.5",
     "drizzle-orm": "^0.40.0",
     "hono": "^4.7.4",
