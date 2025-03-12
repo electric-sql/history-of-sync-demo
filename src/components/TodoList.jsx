@@ -27,15 +27,14 @@ export const TodoList = ({ todos = [], onToggleComplete, onDelete }) => {
   return (
     <Flex direction="column">
       {todos.map((todo) => (
-        <>
+        <div key={todo.id}>
           <TodoItem
-            key={todo.id}
             todo={todo}
             onToggleComplete={onToggleComplete}
             onDelete={onDelete}
           />
           <Separator />
-        </>
+        </div>
       ))}
     </Flex>
   )

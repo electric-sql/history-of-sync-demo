@@ -21,6 +21,7 @@ export const AuditLog = ({ logs = [] }) => {
     )
   }
 
+  console.log({ logs })
   logs.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
 
   return (

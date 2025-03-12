@@ -5,7 +5,7 @@
   "type": "module",
   "description": "React + Hono.js + Postgres application",
   "scripts": {
-    "dev": "concurrently \"vite\" \"tsx server/index.ts\"",
+    "dev": "docker compose up -d & concurrently \"vite\" \"tsx watch server/index.ts\"",
     "server": "tsx server/index.ts",
     "build": "vite build",
     "lint": "eslint .",
@@ -28,6 +28,8 @@
   "license": "unlicense",
   "devDependencies": {
     "@eslint/js": "^9.22.0",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
     "@typescript-eslint/eslint-plugin": "^8.26.1",
     "@typescript-eslint/parser": "^8.26.1",
     "@vitejs/plugin-react": "^4.2.1",
@@ -51,18 +53,22 @@
     "@fontsource/merriweather": "^5.2.6",
     "@fontsource/merriweather-sans": "^5.2.5",
     "@hono/node-server": "^1.4.0",
+    "@kylemathews/optimistic": "^0.0.8",
     "@radix-ui/react-toast": "^1.2.6",
     "@radix-ui/themes": "^3.2.1",
+    "@tanstack/react-query": "^5.67.3",
     "@tanstack/react-router": "^1.114.13",
     "@tanstack/router": "0.0.1-beta.53",
     "diff": "^7.0.0",
     "drizzle-kit": "^0.30.5",
     "drizzle-orm": "^0.40.0",
+    "drizzle-zod": "^0.7.0",
     "hono": "^4.7.4",
     "postgres": "^3.4.5",
     "prop-types": "^15.8.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "vite-plugin-capsize-radix": "^0.0.9"
+    "vite-plugin-capsize-radix": "^0.0.9",
+    "zod": "^3.24.2"
   }
 }

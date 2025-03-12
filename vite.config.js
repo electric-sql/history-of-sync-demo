@@ -11,7 +11,7 @@ export default defineConfig({
     react(),
     capsizeRadixPlugin({
       // Import this file into your app after you import Radix's CSS
-      outputPath: `./public/typography.css`,
+      outputPath: `./src/typography.css`,
       // Use system fonts since they're always available
       defaultFontStack: [merriweather, arial],
       headingFontStack: [merriweatherSans, arial],

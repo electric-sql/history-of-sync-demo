@@ -9,7 +9,7 @@ import Navbar from "./Navbar"
  */
 const RootLayout = () => {
   return (
-    <Container size="4" align="center" mt="5">
+    <Container size="4" align="center" pt="5">
       <Flex direction="column" gap="5">
         <Navbar />
         <Outlet />

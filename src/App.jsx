@@ -2,7 +2,7 @@ import React from "react"
 import "./App.css"
 import "@radix-ui/themes/styles.css"
 // Import the typography CSS file after Radix's CSS
-import "../public/typography.css"
+import "./typography.css"
 import "@fontsource/merriweather"
 import "@fontsource/merriweather-sans"
 import { Theme } from "@radix-ui/themes"
@@ -17,7 +17,8 @@ import {
 import RootLayout from "./components/RootLayout"
 import Home from "./components/Home"
 import APIFetchExample from "./examples/02-APIFetch/APIFetchExample"
-import FormPostExample from "./examples/01-FormPost/FormPostExample"
+import TanstackQueryExample from "./examples/03-TanstackQuery"
+import TanstackOptimisticExample from "./examples/04-TanstackOptimistic/index"
 
 // Define routes
 const rootRoute = createRootRoute({
@@ -30,12 +31,6 @@ const indexRoute = createRoute({
   component: Home,
 })
 
-const formPostRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/examples/form-post",
-  component: FormPostExample,
-})
-
 const apiFetchRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/examples/api-fetch",
@@ -46,12 +41,7 @@ const apiFetchRoute = createRoute({
 const tanstackQueryRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/examples/tanstack-query",
-  component: () => (
-    <div>
-      <h1>TanStack Query Example</h1>
-      <p>This example will be implemented in the future.</p>
-    </div>
-  ),
+  component: TanstackQueryExample,
 })
 
 const tanstackQuerySideEffectsRoute = createRoute({
@@ -79,18 +69,12 @@ const electricSqlRoute = createRoute({
 const tanstackOptimisticRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/examples/tanstack-optimistic",
-  component: () => (
-    <div>
-      <h1>TanStack Optimistic Example</h1>
-      <p>This example will be implemented in the future.</p>
-    </div>
-  ),
+  component: TanstackOptimisticExample,
 })
 
 // Create the router
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  formPostRoute,
   apiFetchRoute,
   tanstackQueryRoute,
   tanstackQuerySideEffectsRoute,

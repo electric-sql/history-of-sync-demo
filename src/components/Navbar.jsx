@@ -20,9 +20,8 @@ const Navbar = () => {
         </a>
         <NavLink to="/examples/api-fetch">02-APIFetch</NavLink>
         <NavLink to="/examples/tanstack-query">03-TanstackQuery</NavLink>
-        <NavLink to="/examples/electric-sql">05-ElectricSQL</NavLink>
         <NavLink to="/examples/tanstack-optimistic">
-          06-TanstackOptimistic
+          04-TanstackOptimistic
         </NavLink>
       </Flex>
     </Flex>

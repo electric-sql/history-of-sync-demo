@@ -41,16 +41,17 @@ const APIFetchExample = () => {
       const data = await response.json()
 
       // Map the database field names to what the AuditLogEntry component expects
-      const mappedLogs = data.map((log) => ({
-        event: log.event_name,
-        timestamp: log.timestamp,
-        oldData: log.old_values,
-        newData: log.new_values,
-        entityId: log.entity_id,
-        entityType: log.entity_type,
-      }))
+      // const mappedLogs = data.map((log) => ({
+      //   event: log.event_name,
+      //   timestamp: log.timestamp,
+      //   oldData: log.old_values,
+      //   newData: log.new_values,
+      //   entityId: log.entity_id,
+      //   entityType: log.entity_type,
+      // }))
 
-      setLogs(mappedLogs)
+      console.log({ data })
+      setLogs(data)
     } catch (error) {
       console.error("Error fetching audit logs:", error)
       showError(error.message)
@@ -103,7 +104,10 @@ const APIFetchExample = () => {
   }
 
   // Function to toggle todo completion status
-  const toggleTodoCompletion = async (todoId, currentStatus) => {
+  const toggleTodoCompletion = async ({
+    id: todoId,
+    is_complete: currentStatus,
+  }) => {
     try {
       const response = await fetch(`/api/todos/${todoId}`, {
         method: "PUT",
@@ -129,7 +133,7 @@ const APIFetchExample = () => {
   }
 
   // Function to delete a todo
-  const deleteTodo = async (todoId) => {
+  const deleteTodo = async ({ id: todoId }) => {
     try {
       const response = await fetch(`/api/todos/${todoId}`, {
         method: "DELETE",

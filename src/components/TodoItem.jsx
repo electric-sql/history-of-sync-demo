@@ -15,13 +15,13 @@ import PropTypes from "prop-types"
 export const TodoItem = ({ todo, onToggleComplete, onDelete }) => {
   const handleToggle = () => {
     if (onToggleComplete) {
-      onToggleComplete(todo.id, todo.is_complete)
+      onToggleComplete(todo)
     }
   }
 
   const handleDelete = () => {
     if (onDelete) {
-      onDelete(todo.id)
+      onDelete(todo)
     }
   }
 

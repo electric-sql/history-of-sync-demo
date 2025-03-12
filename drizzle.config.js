@@ -1,7 +1,8 @@
 export default {
-  schema: "./server/db/schema.js",
+  schema: "./server/db/schema.ts",
   out: "./server/db/migrations",
   dialect: "postgresql",
+  casing: `snake_case`,
   dbCredentials: {
     url:
       process.env.DATABASE_URL ||
