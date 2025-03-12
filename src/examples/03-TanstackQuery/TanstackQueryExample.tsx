@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Flex, Heading, TextField, Button, Grid } from "@radix-ui/themes"
 import TodoList from "../../components/TodoList"
 import AuditLog from "../../components/AuditLog"
@@ -10,12 +10,13 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query"
+import api from "../../utils/api"
 
 // Create a client
 const queryClient = new QueryClient()
 
 // Wrapper component to provide the QueryClientProvider
-const TanstackQueryExample = () => {
+const TanstackQueryExample: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TanstackQueryContent />
@@ -27,33 +28,16 @@ const TanstackQueryExample = () => {
  * TanstackQueryContent component demonstrates using TanStack Query for API data fetching
  * and mutations, providing automatic caching, refetching, and optimistic updates
  */
-const TanstackQueryContent = () => {
-  const [newTodoTitle, setNewTodoTitle] = useState("")
-  const [errorMessage, setErrorMessage] = useState("")
-  const [isErrorToastOpen, setIsErrorToastOpen] = useState(false)
+const TanstackQueryContent: React.FC = () => {
+  const [newTodoTitle, setNewTodoTitle] = useState<string>("")
+  const [errorMessage, setErrorMessage] = useState<string>("")
+  const [isErrorToastOpen, setIsErrorToastOpen] = useState<boolean>(false)
   const queryClient = useQueryClient()
 
   // Function to show error toast
-  const showError = (message) => {
+  const showError = (message: string): void => {
     setErrorMessage(message)
     setIsErrorToastOpen(true)
-  }
-
-  // API functions
-  const fetchTodosApi = async () => {
-    const response = await fetch("/api/todos")
-    if (!response.ok) {
-      throw new Error(`Failed to fetch todos: ${response.statusText}`)
-    }
-    return response.json()
-  }
-
-  const fetchAuditLogsApi = async () => {
-    const response = await fetch("/api/audit-logs")
-    if (!response.ok) {
-      throw new Error(`Failed to fetch audit logs: ${response.statusText}`)
-    }
-    return response.json()
   }
 
   // Use TanStack Query hooks for data fetching
@@ -63,7 +47,7 @@ const TanstackQueryContent = () => {
     error: todosError,
   } = useQuery({
     queryKey: ["todos"],
-    queryFn: fetchTodosApi,
+    queryFn: api.fetchTodos,
   })
 
   const {
@@ -72,40 +56,18 @@ const TanstackQueryContent = () => {
     error: logsError,
   } = useQuery({
     queryKey: ["auditLogs"],
-    queryFn: fetchAuditLogsApi,
+    queryFn: api.fetchAuditLogs,
   })
 
   // Handle errors from queries
-  React.useEffect(() => {
-    if (todosError) showError(todosError.message)
-    if (logsError) showError(logsError.message)
+  useEffect(() => {
+    if (todosError) showError((todosError as Error).message)
+    if (logsError) showError((logsError as Error).message)
   }, [todosError, logsError])
 
   // Create Todo Mutation
   const createTodoMutation = useMutation({
-    mutationFn: async (title) => {
-      const response = await fetch("/api/todos", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ title }),
-      })
-
-      if (!response.ok) {
-        // Handle the "slow" error specifically
-        if (response.status === 429) {
-          throw new Error("Too many requests. Please try again later.")
-        }
-
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(
-          errorData.message || `Failed to create todo: ${response.statusText}`
-        )
-      }
-
-      return response.json()
-    },
+    mutationFn: (title: string) => api.createTodo(title),
     onSuccess: () => {
       // Invalidate and refetch todos and audit logs queries
       queryClient.invalidateQueries({ queryKey: ["todos"] })
@@ -113,72 +75,48 @@ const TanstackQueryContent = () => {
       // Clear the input field
       setNewTodoTitle("")
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error("Error creating todo:", error)
-      showError(error.message)
+      showError((error as Error).message)
     },
   })
 
   // Toggle Todo Completion Mutation
   const toggleTodoMutation = useMutation({
-    mutationFn: async ({ id: todoId, is_complete: currentStatus }) => {
-      const response = await fetch(`/api/todos/${todoId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ is_complete: !currentStatus }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(
-          errorData.message || `Failed to update todo: ${response.statusText}`
-        )
-      }
-
-      return response.json()
-    },
+    mutationFn: ({
+      id: todoId,
+      is_complete: currentStatus,
+    }: {
+      id: string
+      is_complete: boolean
+    }) => api.updateTodo(todoId, { is_complete: !currentStatus }),
     onSuccess: () => {
       // Invalidate and refetch todos and audit logs queries
       queryClient.invalidateQueries({ queryKey: ["todos"] })
       queryClient.invalidateQueries({ queryKey: ["auditLogs"] })
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error("Error updating todo:", error)
-      showError(error.message)
+      showError((error as Error).message)
     },
   })
 
   // Delete Todo Mutation
   const deleteTodoMutation = useMutation({
-    mutationFn: async ({ id: todoId }) => {
-      const response = await fetch(`/api/todos/${todoId}`, {
-        method: "DELETE",
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(
-          errorData.message || `Failed to delete todo: ${response.statusText}`
-        )
-      }
-
-      return response.json()
-    },
+    mutationFn: ({ id: todoId }: { id: string }) => api.deleteTodo(todoId),
     onSuccess: () => {
       // Invalidate and refetch todos and audit logs queries
       queryClient.invalidateQueries({ queryKey: ["todos"] })
       queryClient.invalidateQueries({ queryKey: ["auditLogs"] })
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error("Error deleting todo:", error)
-      showError(error.message)
+      showError((error as Error).message)
     },
   })
 
   // Function to create a new todo
-  const createTodo = (e) => {
+  const createTodo = (e: React.FormEvent): void => {
     e.preventDefault()
 
     if (!newTodoTitle.trim()) {
@@ -216,25 +154,25 @@ const TanstackQueryContent = () => {
               disabled={isLoading}
             />
             <Button type="submit" disabled={isLoading}>
-              {createTodoMutation.isPending ? "Adding..." : "Add Todo"}
+              {isLoading ? "Adding..." : "Add Todo"}
             </Button>
           </Flex>
         </form>
       </Flex>
 
-      <Grid columns="2" gap="6">
-        <Flex direction="column" gap="5">
+      <Grid columns="2" gap="5">
+        <Flex direction="column" gap="3">
           <Heading size="4">Todos</Heading>
           <TodoList
             todos={todos}
-            onToggleComplete={toggleTodoMutation.mutate}
+            onToggle={toggleTodoMutation.mutate}
             onDelete={deleteTodoMutation.mutate}
+            isLoading={isLoading}
           />
         </Flex>
-
-        <Flex direction="column" gap="5">
+        <Flex direction="column" gap="3">
           <Heading size="4">Audit Log</Heading>
-          <AuditLog logs={logs} />
+          <AuditLog logs={logs} isLoading={isLoading} />
         </Flex>
       </Grid>
 
@@ -242,7 +180,6 @@ const TanstackQueryContent = () => {
         message={errorMessage}
         open={isErrorToastOpen}
         onOpenChange={setIsErrorToastOpen}
-        duration={5000}
       />
     </Flex>
   )

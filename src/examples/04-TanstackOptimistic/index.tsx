@@ -14,13 +14,18 @@ import {
   auditLogsUpdateSchema,
   AuditLog as AuditLogType,
 } from "../../../server/db/schema.ts"
+import api from "../../utils/api"
+
+interface PersistResult {
+  txid: number | undefined
+}
 
 /**
- * TanstackOpimisticExample component demonstrates sync data between the client and server
+ * TanstackOptimisticExample component demonstrates sync data between the client and server
  * using @tanstack/optimistic & ElectricSQL.
  */
-const TanstackOptimisticExample = () => {
-  const [newTodoTitle, setNewTodoTitle] = useState(``)
+const TanstackOptimisticExample: React.FC = () => {
+  const [newTodoTitle, setNewTodoTitle] = useState<string>("")
 
   const {
     data: todos,
@@ -28,135 +33,82 @@ const TanstackOptimisticExample = () => {
     update: updateTodo,
     delete: deleteTodo,
   } = useCollection<Todo>({
-    id: `todos`,
+    id: "todos",
     sync: createElectricSync(
       {
-        url: `http://localhost:3000/v1/shape`,
+        url: "http://localhost:3000/v1/shape",
         params: {
-          table: `todos`,
+          table: "todos",
         },
         parser: {
-          timestamptz: (date) => {
+          timestamptz: (date: string): Date => {
             return new Date(date)
           },
         },
       },
-      { primaryKey: [`id`] }
+      { primaryKey: ["id"] }
     ),
     mutationFn: {
-      persist: async ({ transaction }) => {
+      persist: async ({ transaction }): Promise<PersistResult> => {
         console.log({ transaction: transaction.toObject() })
         for (const mutation of transaction.mutations) {
-          console.log(`type`, mutation.type)
-          if (mutation.type === `insert`) {
-            const response = await fetch("/api/todos", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ title: mutation.changes.title }),
-            })
-
-            if (!response.ok) {
-              // Handle the "slow" error specifically
-              if (response.status === 429) {
-                throw new Error("Too many requests. Please try again later.")
-              }
-
-              const errorData = await response.json().catch(() => ({}))
-              throw new Error(
-                errorData.message ||
-                  `Failed to create todo: ${response.statusText}`
-              )
-            }
-
-            const result = await response.json()
+          console.log("type", mutation.type)
+          if (mutation.type === "insert") {
+            const result = await api.createTodo(mutation.changes.title)
             return {
               txid: result.txid,
             }
-          } else if (mutation.type === `update`) {
-            const response = await fetch(`/api/todos/${mutation.original.id}`, {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ ...mutation.changes }),
+          } else if (mutation.type === "update") {
+            const result = await api.updateTodo(mutation.original.id, {
+              ...mutation.changes,
             })
-
-            if (!response.ok) {
-              // Handle the "slow" error specifically
-              if (response.status === 429) {
-                throw new Error("Too many requests. Please try again later.")
-              }
-
-              const errorData = await response.json().catch(() => ({}))
-              throw new Error(
-                errorData.message ||
-                  `Failed to create todo: ${response.statusText}`
-              )
-            }
-
-            const result = await response.json()
             return {
               txid: result.txid,
             }
-          } else if (mutation.type === `delete`) {
-            const response = await fetch(`/api/todos/${mutation.original.id}`, {
-              method: "DELETE",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            })
-
-            if (!response.ok) {
-              // Handle the "slow" error specifically
-              if (response.status === 429) {
-                throw new Error("Too many requests. Please try again later.")
-              }
-
-              const errorData = await response.json().catch(() => ({}))
-              throw new Error(
-                errorData.message ||
-                  `Failed to create todo: ${response.statusText}`
-              )
-            }
-
-            const result = await response.json()
+          } else if (mutation.type === "delete") {
+            const result = await api.deleteTodo(mutation.original.id)
             return {
               txid: result.txid,
             }
           } else {
-            throw new Error(`not implemented`)
+            throw new Error("not implemented")
           }
         }
+
+        // This should never be reached but is needed to satisfy TypeScript
+        throw new Error("No mutations processed")
       },
       awaitSync: async ({
         persistResult,
         collection,
       }: {
-        persistResult: { txid: number }
+        persistResult: PersistResult
         collection: Collection
-      }) => {
+      }): Promise<void> => {
         console.log({ persistResult })
         // Start waiting for the txid
-        await collection.config.sync.awaitTxid(persistResult.txid)
+        if (persistResult.txid !== undefined) {
+          await collection.config.sync.awaitTxid(persistResult.txid)
+        }
       },
     },
     schema: todoUpdateSchema,
   })
+
   const { data: logs } = useCollection<AuditLogType>({
-    id: `audit-logs`,
+    id: "audit-logs",
     sync: createElectricSync(
       {
-        url: `http://localhost:3000/v1/shape`,
+        url: "http://localhost:3000/v1/shape",
         params: {
-          table: `audit_logs`,
+          table: "audit_logs",
         },
         parser: {
-          jsonb: (str) => {
+          // Use type assertion to handle the jsonb parser
+          jsonb: (str: string) => {
             // Drizzle seems to be double-stringifying JSON data 🤔 but just for inserts
             const result = JSON.parse(str)
-            if (typeof result === `string`) {
+            if (typeof result === "string") {
               return JSON.parse(result)
             } else {
               return result
@@ -164,18 +116,49 @@ const TanstackOptimisticExample = () => {
           },
         },
       },
-      { primaryKey: [`id`] }
+      { primaryKey: ["id"] }
     ),
     mutationFn: {
-      persist: async () => {
+      persist: async (): Promise<void> => {
         return Promise.resolve()
       },
-      awaitSync: async () => {
+      awaitSync: async (): Promise<void> => {
         return Promise.resolve()
       },
     },
     schema: auditLogsUpdateSchema,
   })
+
+  const handleSubmit = (e: React.FormEvent): void => {
+    e.preventDefault()
+
+    if (!newTodoTitle.trim()) {
+      return
+    }
+
+    insertTodo({
+      id: crypto.randomUUID(),
+      title: newTodoTitle,
+      is_complete: false,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+
+    // Clear the input field
+    setNewTodoTitle("")
+  }
+
+  const handleToggleComplete = (todo: Todo): void => {
+    updateTodo(todo, (draft) => {
+      console.log({ draft })
+      draft.is_complete = !draft.is_complete
+    })
+  }
+
+  const handleDelete = (todo: Todo): void => {
+    console.log("implement", todo)
+    deleteTodo(todo)
+  }
 
   return (
     <Flex direction="column" gap="5">
@@ -185,21 +168,7 @@ const TanstackOptimisticExample = () => {
 
       <Flex direction="column" gap="5">
         <Heading size="4">Add New Todo</Heading>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            insertTodo({
-              id: crypto.randomUUID(),
-              title: newTodoTitle,
-              is_complete: false,
-              created_at: new Date(),
-              updated_at: new Date(),
-            })
-
-            // Clear the input field
-            setNewTodoTitle("")
-          }}
-        >
+        <form onSubmit={handleSubmit}>
           <Flex gap="2">
             <TextField.Root
               size="3"
@@ -213,38 +182,24 @@ const TanstackOptimisticExample = () => {
         </form>
       </Flex>
 
-      <Grid columns="2" gap="6">
-        <Flex direction="column" gap="5">
+      <Grid columns="2" gap="5">
+        <Flex direction="column" gap="3">
           <Heading size="4">Todos</Heading>
           <TodoList
             todos={todos}
-            onToggleComplete={(todo) =>
-              updateTodo(todo, (draft) => {
-                console.log({ draft })
-                draft.is_complete = !draft.is_complete
-              })
-            }
-            onDelete={(todo) => {
-              console.log(`implement`, todo)
-              deleteTodo(todo)
-            }}
+            onToggleComplete={handleToggleComplete}
+            onDelete={handleDelete}
+            isLoading={false}
           />
         </Flex>
 
-        <Flex direction="column" gap="5">
+        <Flex direction="column" gap="3">
           <Heading size="4">Audit Log</Heading>
-          <AuditLog logs={logs} />
+          <AuditLog logs={logs} isLoading={false} />
         </Flex>
       </Grid>
     </Flex>
   )
 }
-//
-// <ErrorToast
-//   message={errorMessage}
-//   open={isErrorToastOpen}
-//   onOpenChange={setIsErrorToastOpen}
-//   duration={5000}
-// />
 
 export default TanstackOptimisticExample
