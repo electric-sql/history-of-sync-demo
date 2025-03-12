@@ -83,13 +83,10 @@ const TanstackQueryContent: React.FC = () => {
 
   // Toggle Todo Completion Mutation
   const toggleTodoMutation = useMutation({
-    mutationFn: ({
-      id: todoId,
-      is_complete: currentStatus,
-    }: {
-      id: string
-      is_complete: boolean
-    }) => api.updateTodo(todoId, { is_complete: !currentStatus }),
+    mutationFn: (todo) => {
+      console.log({ todo })
+      return api.updateTodo(todo.id, { is_complete: !todo.is_complete })
+    },
     onSuccess: () => {
       // Invalidate and refetch todos and audit logs queries
       queryClient.invalidateQueries({ queryKey: ["todos"] })
@@ -165,7 +162,7 @@ const TanstackQueryContent: React.FC = () => {
           <Heading size="4">Todos</Heading>
           <TodoList
             todos={todos}
-            onToggle={toggleTodoMutation.mutate}
+            onToggleComplete={toggleTodoMutation.mutate}
             onDelete={deleteTodoMutation.mutate}
             isLoading={isLoading}
           />
