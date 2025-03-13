@@ -23,7 +23,6 @@ const APIFetchExample: React.FC = () => {
       const data = await api.fetchTodos()
       setTodos(data)
     } catch (error) {
-      console.error("Error fetching todos:", error)
       showError((error as Error).message)
     }
   }
@@ -32,10 +31,8 @@ const APIFetchExample: React.FC = () => {
   const fetchAuditLogs = async (): Promise<void> => {
     try {
       const data = await api.fetchAuditLogs()
-      console.log({ data })
       setLogs(data)
     } catch (error) {
-      console.error("Error fetching audit logs:", error)
       showError((error as Error).message)
     }
   }
@@ -60,7 +57,6 @@ const APIFetchExample: React.FC = () => {
       // Refetch data to update the UI
       await Promise.all([fetchTodos(), fetchAuditLogs()])
     } catch (error) {
-      console.error("Error creating todo:", error)
       showError((error as Error).message)
     } finally {
       setIsLoading(false)
@@ -81,7 +77,6 @@ const APIFetchExample: React.FC = () => {
       // Refetch data to update the UI
       await Promise.all([fetchTodos(), fetchAuditLogs()])
     } catch (error) {
-      console.error("Error updating todo:", error)
       showError((error as Error).message)
     }
   }
@@ -94,7 +89,6 @@ const APIFetchExample: React.FC = () => {
       // Refetch data to update the UI
       await Promise.all([fetchTodos(), fetchAuditLogs()])
     } catch (error) {
-      console.error("Error deleting todo:", error)
       showError((error as Error).message)
     }
   }
@@ -111,8 +105,6 @@ const APIFetchExample: React.FC = () => {
       setIsLoading(true)
       try {
         await Promise.all([fetchTodos(), fetchAuditLogs()])
-      } catch (error) {
-        console.error("Error loading initial data:", error)
       } finally {
         setIsLoading(false)
       }

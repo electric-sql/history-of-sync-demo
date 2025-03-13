@@ -7,7 +7,7 @@ import {
 } from "@kylemathews/optimistic/react-electric"
 import TodoList from "../../components/TodoList"
 import AuditLog from "../../components/AuditLog"
-// import ErrorToast from "../../components/ErrorToast"
+import ErrorToast from "../../components/ErrorToast"
 import {
   todoUpdateSchema,
   Todo,
@@ -26,6 +26,14 @@ interface PersistResult {
  */
 const TanstackOptimisticExample: React.FC = () => {
   const [newTodoTitle, setNewTodoTitle] = useState<string>("")
+  const [errorMessage, setErrorMessage] = useState<string>("")
+  const [isErrorToastOpen, setIsErrorToastOpen] = useState<boolean>(false)
+
+  // Function to show error toast
+  const showError = (message: string): void => {
+    setErrorMessage(message)
+    setIsErrorToastOpen(true)
+  }
 
   const {
     data: todos,
@@ -50,33 +58,36 @@ const TanstackOptimisticExample: React.FC = () => {
     ),
     mutationFn: {
       persist: async ({ transaction }): Promise<PersistResult> => {
-        console.log({ transaction: transaction.toObject() })
-        for (const mutation of transaction.mutations) {
-          console.log("type", mutation.type)
-          if (mutation.type === "insert") {
-            const result = await api.createTodo(mutation.changes.title)
-            return {
-              txid: result.txid,
+        try {
+          for (const mutation of transaction.mutations) {
+            if (mutation.type === "insert") {
+              const result = await api.createTodo(mutation.changes.title)
+              return {
+                txid: result.txid,
+              }
+            } else if (mutation.type === "update") {
+              const result = await api.updateTodo(mutation.original.id, {
+                ...mutation.changes,
+              })
+              return {
+                txid: result.txid,
+              }
+            } else if (mutation.type === "delete") {
+              const result = await api.deleteTodo(mutation.original.id)
+              return {
+                txid: result.txid,
+              }
+            } else {
+              throw new Error("not implemented")
             }
-          } else if (mutation.type === "update") {
-            const result = await api.updateTodo(mutation.original.id, {
-              ...mutation.changes,
-            })
-            return {
-              txid: result.txid,
-            }
-          } else if (mutation.type === "delete") {
-            const result = await api.deleteTodo(mutation.original.id)
-            return {
-              txid: result.txid,
-            }
-          } else {
-            throw new Error("not implemented")
           }
-        }
 
-        // This should never be reached but is needed to satisfy TypeScript
-        throw new Error("No mutations processed")
+          // This should never be reached but is needed to satisfy TypeScript
+          throw new Error("No mutations processed")
+        } catch (error) {
+          showError((error as Error).message)
+          throw error
+        }
       },
       awaitSync: async ({
         persistResult,
@@ -85,7 +96,6 @@ const TanstackOptimisticExample: React.FC = () => {
         persistResult: PersistResult
         collection: Collection
       }): Promise<void> => {
-        console.log({ persistResult })
         // Start waiting for the txid
         if (persistResult.txid !== undefined) {
           await collection.config.sync.awaitTxid(persistResult.txid)
@@ -150,13 +160,11 @@ const TanstackOptimisticExample: React.FC = () => {
 
   const handleToggleComplete = (todo: Todo): void => {
     updateTodo(todo, (draft) => {
-      console.log({ draft })
       draft.is_complete = !draft.is_complete
     })
   }
 
   const handleDelete = (todo: Todo): void => {
-    console.log("implement", todo)
     deleteTodo(todo)
   }
 
@@ -198,6 +206,12 @@ const TanstackOptimisticExample: React.FC = () => {
           <AuditLog logs={logs} isLoading={false} />
         </Flex>
       </Grid>
+
+      <ErrorToast
+        message={errorMessage}
+        open={isErrorToastOpen}
+        onOpenChange={setIsErrorToastOpen}
+      />
     </Flex>
   )
 }

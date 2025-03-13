@@ -1,6 +1,6 @@
 import React from "react"
 import * as Toast from "@radix-ui/react-toast"
-import { Flex, Box, Text, IconButton } from "@radix-ui/themes"
+import { Flex, Text, IconButton } from "@radix-ui/themes"
 import PropTypes from "prop-types"
 import "./ErrorToast.css"
 
@@ -27,14 +27,14 @@ export const ErrorToast = ({
         duration={duration}
       >
         <Flex justify="between" align="center" gap="3">
-          <Box>
+          <Flex direction="column" gap="3">
             <Text as="div" weight="bold" size="2" color="red">
               Error
             </Text>
             <Text as="div" size="2" color="gray">
               {message}
             </Text>
-          </Box>
+          </Flex>
           <Toast.Action asChild altText="Close">
             <IconButton variant="ghost" color="gray" radius="full" size="1">
               ✕

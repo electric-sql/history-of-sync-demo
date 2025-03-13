@@ -59,7 +59,7 @@ const apiRequest = async <T>(
       const errorData = await response.json().catch(() => ({}))
       throw new Error(
         errorData.message ||
-          `Request failed: ${response.statusText || response.status}`
+          `Request failed: ${errorData?.error || response.statusText || response.status}`
       )
     }
 
