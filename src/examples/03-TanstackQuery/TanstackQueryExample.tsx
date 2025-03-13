@@ -11,6 +11,7 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query"
 import api from "../../utils/api"
+import { Todo } from "../../utils/api" // Import Todo type
 
 // Create a client
 const queryClient = new QueryClient()
@@ -65,50 +66,121 @@ const TanstackQueryContent: React.FC = () => {
     if (logsError) showError((logsError as Error).message)
   }, [todosError, logsError])
 
-  // Create Todo Mutation
+  // Create Todo Mutation with optimistic updates
   const createTodoMutation = useMutation({
     mutationFn: (title: string) => api.createTodo(title),
-    onSuccess: () => {
-      // Invalidate and refetch todos and audit logs queries
+    // Add optimistic update
+    onMutate: async (title: string) => {
+      // Cancel any outgoing refetches to avoid overwriting our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["todos"] })
+
+      // Snapshot the previous value
+      const previousTodos = queryClient.getQueryData<Todo[]>(["todos"]) || []
+
+      // Create an optimistic todo
+      const optimisticTodo: Todo = {
+        id: `temp-${Date.now()}`, // Temporary ID until server responds
+        title,
+        is_complete: false,
+        created_at: new Date(),
+        updated_at: new Date(),
+      }
+
+      // Optimistically update the cache
+      queryClient.setQueryData<Todo[]>(["todos"], (old = []) => [
+        ...old,
+        optimisticTodo,
+      ])
+
+      // Return context with the previous value
+      return { previousTodos }
+    },
+    onError: (error, _, context) => {
+      // If the mutation fails, roll back to the previous value
+      if (context?.previousTodos) {
+        queryClient.setQueryData(["todos"], context.previousTodos)
+      }
+      console.error("Error creating todo:", error)
+      showError((error as Error).message)
+    },
+    onSettled: () => {
+      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ["todos"] })
       queryClient.invalidateQueries({ queryKey: ["auditLogs"] })
       // Clear the input field
       setNewTodoTitle("")
     },
-    onError: (error: unknown) => {
-      console.error("Error creating todo:", error)
-      showError((error as Error).message)
-    },
   })
 
-  // Toggle Todo Completion Mutation
+  // Toggle Todo Completion Mutation with optimistic updates
   const toggleTodoMutation = useMutation({
-    mutationFn: (todo) => {
-      console.log({ todo })
+    mutationFn: (todo: Todo) => {
       return api.updateTodo(todo.id, { is_complete: !todo.is_complete })
     },
-    onSuccess: () => {
-      // Invalidate and refetch todos and audit logs queries
-      queryClient.invalidateQueries({ queryKey: ["todos"] })
-      queryClient.invalidateQueries({ queryKey: ["auditLogs"] })
+    // Add optimistic update
+    onMutate: async (todo: Todo) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["todos"] })
+
+      // Snapshot the previous value
+      const previousTodos = queryClient.getQueryData<Todo[]>(["todos"]) || []
+
+      // Optimistically update the cache
+      queryClient.setQueryData<Todo[]>(["todos"], (old = []) =>
+        old.map((t) =>
+          t.id === todo.id ? { ...t, is_complete: !t.is_complete } : t
+        )
+      )
+
+      // Return context with the previous value
+      return { previousTodos }
     },
-    onError: (error: unknown) => {
+    onError: (error, _, context) => {
+      // If the mutation fails, roll back to the previous value
+      if (context?.previousTodos) {
+        queryClient.setQueryData(["todos"], context.previousTodos)
+      }
       console.error("Error updating todo:", error)
       showError((error as Error).message)
     },
-  })
-
-  // Delete Todo Mutation
-  const deleteTodoMutation = useMutation({
-    mutationFn: ({ id: todoId }: { id: string }) => api.deleteTodo(todoId),
-    onSuccess: () => {
-      // Invalidate and refetch todos and audit logs queries
+    onSettled: () => {
+      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ["todos"] })
       queryClient.invalidateQueries({ queryKey: ["auditLogs"] })
     },
-    onError: (error: unknown) => {
+  })
+
+  // Delete Todo Mutation with optimistic updates
+  const deleteTodoMutation = useMutation({
+    mutationFn: ({ id: todoId }: { id: string }) => api.deleteTodo(todoId),
+    // Add optimistic update
+    onMutate: async ({ id: todoId }: { id: string }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["todos"] })
+
+      // Snapshot the previous value
+      const previousTodos = queryClient.getQueryData<Todo[]>(["todos"]) || []
+
+      // Optimistically update the cache
+      queryClient.setQueryData<Todo[]>(["todos"], (old = []) =>
+        old.filter((t) => t.id !== todoId)
+      )
+
+      // Return context with the previous value
+      return { previousTodos }
+    },
+    onError: (error, _, context) => {
+      // If the mutation fails, roll back to the previous value
+      if (context?.previousTodos) {
+        queryClient.setQueryData(["todos"], context.previousTodos)
+      }
       console.error("Error deleting todo:", error)
       showError((error as Error).message)
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ["todos"] })
+      queryClient.invalidateQueries({ queryKey: ["auditLogs"] })
     },
   })
 
